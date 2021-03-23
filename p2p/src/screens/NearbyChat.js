@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, cloneElement } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GiftedChat } from 'react-native-gifted-chat';
 import { StyleSheet, Alert } from 'react-native';
 import {
@@ -8,8 +8,9 @@ import {
   sendMessage,
   getConnectionInfo,
 } from 'react-native-wifi-p2p';
-import { CONNECTED } from 'react-native-wifi-p2p/device-info-statuses';
 import { NetworkInfo } from 'react-native-network-info';
+import io from "socket.io-client";
+
 
 /*
  1. Create group on server side (side, which will receive message)
@@ -25,6 +26,10 @@ const PORT = 6000
 
 const IP = '192.168.49.1'
 
+const SERVER_IP = '192.168.1.5';
+
+const IPIDK = '25.226.115.47'
+
 export default function NearbyChat({ route }) {
 
   const [messages, setMessages] = useState([]);
@@ -34,6 +39,7 @@ export default function NearbyChat({ route }) {
   let receiveInterval, connectionInterval;
 
   useEffect(() => {
+    NetworkInfo.getIPV4Address().then(ip => console.log(["CLIENT IP"], ip))
 
     // Fetching connection info after every 300 ms
     connectionInterval = setInterval(() => {
@@ -60,21 +66,47 @@ export default function NearbyChat({ route }) {
       */
 
       // Now adding setInterval to automatically receive messages
-      receiveInterval = setInterval(() => onReceiveMessage(), 100)
+      receiveInterval = setInterval(() => onReceiveMessage(), 100);
+
+      // Creating a socket at the server side.
+      console.log('[SOCKET] Creating socket at the server side');
+      let s = net.createServer(socket => {
+        socket.write("hello from server");
+
+        socket.on('data', (data) => Alert.alert(data));
+
+        socket.on('error', (err) => console.log(err))
+
+        socket.accept()
+      }).listen(PORT, SERVER_IP, () => {
+        console.log("Server is up and running on", PORT, SERVER_IP);
+      });
+
+      s.on('error', (err) => console.log("SERR SERVER", err));
+
+      let second_client = net.createConnection(PORT, SERVER_IP, () => {
+        console.log("Client connected successfully");
+      })
+
+      second_client.on('error',(err) => console.log(err));
+
+      s.on('error', (err) => console.log(err));
     }
     else {
       // CLIENT SIDE
 
       // Connect to the group created by the server
       connect(deviceAddress)
-        .then(info => {
-          console.log("[INFO] Client connected to the group", info);
+        .then(() => {
+          console.log("[INFO] Client connected to the group");
         })
         .catch(err => console.log('[FATAL] Unable to connect with the server group'));
 
-      getConnectionInfo().then(info => {
-        console.log('[GET CONNECTION INFO]', info);
-      })
+      setTimeout(() => {
+        getConnectionInfo().then(info => {
+          console.log('[GET CONNECTION INFO]', info);
+        })
+      }, 2000);
 
       console.log('[SENDING] Connection Message to the server');
 
@@ -84,7 +116,7 @@ export default function NearbyChat({ route }) {
         sendMessage("[INFO] Connection got establised !")
           .then(metaInfo => console.log("[INFO] Message from client -> server", metaInfo))
           .catch(err => console.log("[ERROR] Error sending message from client -> server"))
-      }, 6000);
+      }, 5000);
 
       /*
         Hacky setup to receive messages from the server
@@ -95,23 +127,12 @@ export default function NearbyChat({ route }) {
           - Client will join the connection socket of server
           - Server will send message, which client will listen on
       */
-      console.log('[CONNECTED] ------> ', CONNECTED);
+
+    
       setTimeout(() => {
 
-        let s = net.createServer(socket => {
-          socket.write("hello from server");
-
-          socket.on('data', (data) => console.log(data));
-
-          socket.on('error', (err) => console.log(err))
-        }).listen(PORT, IP);
-
-        s.on('error', (err) => console.log(err));
-
-        let c = net.createConnection(PORT, IP, () => {
-          client.write("Love from client");
-        });
-
+        let c = io.connect('http://192.168.1.5:6000');
+        console.log(c);
         c.on('data', (data) => {
           console.log(data);
         })
@@ -162,14 +183,14 @@ export default function NearbyChat({ route }) {
   
       If client is sending this can be done by sendMessage method of the react-native-wifi-p2p
     */
-    if (isOwner) {
+    if (false) {
       // SERVER [TODO]
       // server.current.socket.write(message)
     }
     else {
       // CLIENT
       setMessages(previousMessages => GiftedChat.append(previousMessages, message));
-      sendMessage(messages[messages.length - 1].text)
+      sendMessage(message[0].text)
         .then((metaInfo) => console.log('[INFO] Send client message successfully', metaInfo))
         .catch(err => console.log('[FATAL] Unable to send client message'));
     }

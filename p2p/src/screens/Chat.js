@@ -5,18 +5,17 @@ import io from "socket.io-client";
 
 import { Text, View, StyleSheet, TextInput, Button } from 'react-native';
 
-export default function Chat({ route }) {
+const Chat = ({ route }) => {
   const peerRef = useRef();
   const socketRef = useRef();
   const otherUser = useRef();
   const sendChannel = useRef();
   const { roomID } = route.params;
-  const [live, setLive] = useState(false);
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    socketRef.current = io.connect("http://192.168.43.48:8000");
-    socketRef.current.emit("join room", "sjfskjfsdfuiosdf"); // Provide Room ID here
+    socketRef.current = io.connect("http://192.168.1.9:9000");
+    socketRef.current.emit("join room", roomID); // Provide Room ID here
 
     socketRef.current.on("other user", userID => {
       callUser(userID);
@@ -35,7 +34,7 @@ export default function Chat({ route }) {
 
   }, []);
 
-  const callUser = (userID) => {
+  function callUser(userID){
     // This will initiate the call
     console.log("[INFO] Initiated a call")
     peerRef.current = Peer(userID);
@@ -45,7 +44,7 @@ export default function Chat({ route }) {
     sendChannel.current.onmessage = handleReceiveMessage;
   }
 
-  const Peer = (userID) => {
+  function Peer(userID) {
     const peer = new RTCPeerConnection({
       iceServers: [
           {
@@ -64,10 +63,10 @@ export default function Chat({ route }) {
     return peer;
   }
 
-  const handleNegotiationNeededEvent = (userID) => {
+  function handleNegotiationNeededEvent(userID){
     // Make Offer
     peerRef.current.createOffer().then(offer => {
-      return peerRef.current.setLocalDescription(offer);
+       return peerRef.current.setLocalDescription(offer);
     })
     .then(() => {
       const payload = {
@@ -80,16 +79,14 @@ export default function Chat({ route }) {
     .catch(err => console.log("Error handling negotiation needed event", err));
   }
 
-  const handleOffer = (incoming) => {
+  function handleOffer(incoming) {
     // Handle Offer made by the initiating peer
-    console.log("Incoming", incoming)
+    console.log("[INFO] Handling Offer")
     peerRef.current = Peer();
-    console.log("Handling Offer...")
     peerRef.current.ondatachannel = (event) => {
-      console.log("[INFO] Handled offer")
       sendChannel.current = event.channel;
       sendChannel.current.onmessage = handleReceiveMessage;
-      setLive(true);
+      console.log('[SUCCESS] Connection established')
     }
 
     const desc = new RTCSessionDescription(incoming.sdp);
@@ -108,14 +105,14 @@ export default function Chat({ route }) {
     })
   }
 
-  const handleAnswer = (message) => {
+  function handleAnswer(message){
     // Handle answer by the remote peer
     const desc = new RTCSessionDescription(message.sdp);
     peerRef.current.setRemoteDescription(desc).catch(e => console.log("Error handle answer", e));
   }
 
   
-  const handleReceiveMessage = (e) => {
+  function handleReceiveMessage(e){
     console.log("[INFO] Message received from peer", e.data);
     const msg = [{
       _id: Math.random(1000).toString(),
@@ -129,7 +126,7 @@ export default function Chat({ route }) {
     // setMessages(messages => [...messages, {yours: false, value: e.data}]);
   };
 
-  const handleICECandidateEvent = (e) => {
+  function handleICECandidateEvent(e) {
     if (e.candidate) {
         const payload = {
             target: otherUser.current,
@@ -139,18 +136,18 @@ export default function Chat({ route }) {
     }
 }
 
-const handleNewICECandidateMsg = (incoming) => {
+function handleNewICECandidateMsg(incoming) {
   const candidate = new RTCIceCandidate(incoming);
 
   peerRef.current.addIceCandidate(candidate)
       .catch(e => console.log(e));
 }
 
-const sendMessage = useCallback((messages = []) => {
+function sendMessage(messages = []){
   console.log(messages);
-  sendChannel.current.send(messages.text);
+  sendChannel.current.send(messages[0].text);
   setMessages(previousMessages => GiftedChat.append(previousMessages, messages))
-}, [])
+}
 
 // console.log(messages);
   return (
@@ -179,3 +176,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   }
 })
+
+export default Chat;

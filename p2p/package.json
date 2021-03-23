@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-community/masked-view": "^0.1.10",
+    "@react-navigation/drawer": "^5.12.4",
     "@react-navigation/native": "^5.9.3",
     "@react-navigation/stack": "^5.14.3",
     "express": "^4.17.1",
@@ -24,7 +25,7 @@
     "react-native-safe-area-context": "^3.2.0",
     "react-native-screens": "^2.18.1",
     "react-native-tcp": "^4.0.0",
-    "react-native-tcp-socket": "^5.2.0",
+    "react-native-vector-icons": "^8.1.0",
     "react-native-webrtc": "^1.89.1",
     "react-native-wifi-p2p": "^3.2.1",
     "socket.io": "^4.0.0",

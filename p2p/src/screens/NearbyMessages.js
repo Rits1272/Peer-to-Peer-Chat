@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import {
   StyleSheet,
   Button,
   ScrollView,
   Text,
+  View,
 } from 'react-native';
 import {
   initialize,
@@ -24,6 +25,7 @@ import {
 } from 'react-native-wifi-p2p';
 import { PermissionsAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 
 export default function NearbyMessages() {
@@ -31,6 +33,28 @@ export default function NearbyMessages() {
   const [devices, setDevices] = useState([]);
   const [data, setData] = useState([]);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: '#fff',
+        height: 75,
+      },
+      headerTintColor: '#000',
+      headerTitleStyle: {
+        fontWeight: 'bold',
+      },
+      headerLeft: () => (
+        <Icon
+          style={{ marginLeft: 15 }}
+          name="menufold"
+          size={28}
+          color="#000"
+          onPress={() => navigation.openDrawer()}
+        />
+      ),
+    })
+  })
 
   useEffect(async () => {
     try {
@@ -63,84 +87,91 @@ export default function NearbyMessages() {
     });
   });
 
-  handleNewInfo = (info) => {
+  const handleNewInfo = (info) => {
     // console.log('OnConnectionInfoUpdated', info);
   };
 
-  handleNewPeers = ({ devices }) => {
+  const handleNewPeers = ({ devices }) => {
     // console.log('OnPeersUpdated', devices);
     setDevices(devices);
   };
 
-  handleThisDeviceChanged = (groupInfo) => {
+  const handleThisDeviceChanged = (groupInfo) => {
     // console.log('THIS_DEVICE_CHANGED_ACTION', groupInfo);
   };
 
-  connectToDevice = (device) => {
+  const connectToDevice = (device) => {
     console.log('Connect to: ', device.deviceAddress);
-    navigation.navigate('NearbyChat', {isOwner: false, deviceAddress: device.deviceAddress})
+    navigation.navigate('NearbyChat', { isOwner: false, deviceAddress: device.deviceAddress })
   };
 
-  onCancelConnect = () => {
+  const onCancelConnect = () => {
     cancelConnect()
       .then(() => console.log('cancelConnect', 'Connection successfully canceled'))
       .catch(err => console.error('cancelConnect', 'Something gone wrong. Details: ', err));
   };
 
-  onCreateGroup = () => {
+  const onCreateGroup = () => {
     createGroup()
       .then(() => console.log('Group created successfully!'))
       .catch(err => console.error('Something gone wrong. Details: ', err));
   };
 
-  onRemoveGroup = () => {
+  const onRemoveGroup = () => {
     removeGroup()
       .then(() => console.log('Currently you don\'t belong to group!'))
       .catch(err => console.error('Something gone wrong. Details: ', err));
   };
 
-  onStopInvestigation = () => {
+  const onStopInvestigation = () => {
     stopDiscoveringPeers()
       .then(() => console.log('Stopping of discovering was successful'))
       .catch(err => console.error(`Something is gone wrong. Maybe your WiFi is disabled? Error details`, err));
   };
 
-  onStartInvestigate = () => {
+  const onStartInvestigate = () => {
     startDiscoveringPeers()
       .then(status => console.log('startDiscoveringPeers', `Status of discovering peers: ${status}`))
       .catch(err => console.error(`Something is gone wrong. Maybe your WiFi is disabled? Error details: ${err}`));
   };
 
-  onGetAvailableDevices = () => {
+  const onGetAvailableDevices = () => {
     getAvailablePeers()
       .then(peers => {
         setDevices(peers)
       });
   };
 
-  onGetConnectionInfo = () => {
+  const onGetConnectionInfo = () => {
     getConnectionInfo()
       .then(info => console.log('getConnectionInfo', info));
   };
 
-  onGetGroupInfo = () => {
+  const onGetGroupInfo = () => {
     getGroupInfo()
       .then(info => console.log('getGroupInfo', info));
   };
 
   return (
     <ScrollView>
+      <View style={{margin: 10}}>
       <Button
-        title="Search Peers"
+        color='#007AFF'
         onPress={onStartInvestigate}
+        title="Search Peers"
       />
-      <Text>Available Devices...</Text>
+      </View>
+      <Text style={{alignSelf: 'center', fontSize: 17, margin: 15, fontWeight: 'bold'}}>SEARCHING NEARBY PEERS...</Text>
       {devices !== undefined && devices.map(d => {
-        return(
-            <Button key={Math.random(1000).toString()} color='red' title={d.deviceName} onPress={() => connectToDevice(d)} />
+        return (
+          <View style={{marginLeft: 15, marginRight: 15, marginBottom: 10}}>
+             <Button key={Math.random(1000).toString()} color='red' title={d.deviceName} onPress={() => connectToDevice(d)} />
+          </View>
         );
       })}
-      <Button color='green' title='Create Group' onPress={() =>{ navigation.navigate('NearbyChat', {isOwner: true, deviceAddress: ""})}}/>
+      <View style={{margin: 10, marginTop: 30}}>
+      <Button color='#007AFF' title='Create Group' onPress={() => { navigation.navigate('NearbyChat', { isOwner: true, deviceAddress: "" }) }} />
+      </View>
     </ScrollView>
   );
 }

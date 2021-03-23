@@ -26,6 +26,8 @@ target 'p2p' do
 
   pod 'react-native-network-info', :path => '../node_modules/react-native-network-info'
 
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+
   target 'p2pTests' do
     inherit! :complete
     # Pods for testing

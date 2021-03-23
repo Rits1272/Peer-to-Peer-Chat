@@ -18,7 +18,6 @@ io.on("connection", socket => {
             console.log("Create")
             rooms[roomID] = [socket.id];
         }
-        console.log(rooms[roomID]);
         const otherUser = rooms[roomID].find(id => id !== socket.id);
         if (otherUser) {
             console.log("Other user fired and user joined fired")
@@ -38,9 +37,10 @@ io.on("connection", socket => {
     });
 
     socket.on("ice-candidate", incoming => {
+        console.log("Ice candidate fired");
         io.to(incoming.target).emit("ice-candidate", incoming.candidate);
     });
 });
 
 
-server.listen(8000, () => console.log('server is running on port 8000'));
+server.listen(9000, () => console.log('server is running on port 9000'));
